@@ -22,10 +22,10 @@ class Projectile(object):
         
         
 class Enemy(object):
-    def __init__(self, x, y, vel):
+    def __init__(self, x, y, vel, size):
         self.x = x
         self.y = y
-        self.size = 40
+        self.size = size
         self.shape = self.gen_shape()
         self.vel = vel
         self.speed = 50

@@ -43,7 +43,9 @@ class Asteroids(object):
         
         
         self.enemies = []
-        self.gen_enemy()
+        self.enemy_spawn_time = 3
+        self.enemy_last_spawn = self.enemy_spawn_time
+        
         self.projectiles = []
         self.time_last_shot = 0
         
@@ -55,14 +57,18 @@ class Asteroids(object):
         self.renderer.draw_projectile(self.projectiles)
         self.renderer.draw_enemy(self.enemies)
     
-    def gen_enemy(self):
-        x = random.randint(-100, -20) if random.random() < 0.5 else random.randint(s_width + 20, s_width + 100)
-        y = random.randint(-100, -20) if random.random() < 0.5 else random.randint(s_height + 20, s_height + 100)
+    def gen_enemy(self, x=None, y=None, size=None):
+        if not x:
+            x = random.randint(-100, -20) if random.random() < 0.5 else random.randint(s_width + 20, s_width + 100)
+        if not y:
+            y = random.randint(-100, -20) if random.random() < 0.5 else random.randint(s_height + 20, s_height + 100)
+        if not size:
+            size = 40
         velX = self.player.x - x
         velY = self.player.y - y
         dist = math.sqrt((self.player.x - x) ** 2 + (self.player.y - y) ** 2)
         velX, velY = velX / dist, velY / dist
-        self.enemies.append(Enemy(x, y, (velX, velY)))    
+        self.enemies.append(Enemy(x, y, (velX, velY), size))    
     
     def is_inside_polygon(self, points, p) -> bool:
         
@@ -146,6 +152,14 @@ class Asteroids(object):
     def frame(self):
         delta = self.clock.get_rawtime() / 1000
         
+        if self.enemy_last_spawn > self.enemy_spawn_time:
+            self.gen_enemy()
+            self.enemy_last_spawn = 0
+            self.enemy_spawn_time *= 0.9
+            self.enemy_spawn_time = max(1, self.enemy_spawn_time)
+        
+        self.enemy_last_spawn += delta
+        
         for obj in self.projectiles:
             for el in self.enemies:
                 shape = el.shape.copy()
@@ -153,11 +167,23 @@ class Asteroids(object):
                     shape[i] = point[0] + el.x, point[1] + el.y
                 if self.is_inside_polygon(points = shape, p = (obj.x, obj.y)):
                     self.enemies.remove(el)
+                    if el.size == 40:
+                        self.gen_enemy(el.x - 20, el.y - 20, 20)
+                        self.gen_enemy(el.x + 20, el.y + 20, 20)
+                    try:
+                        self.projectiles.remove(obj)
+                    except:
+                        pass
             obj.update(delta)
             if obj.x < 0 or obj.x > s_width or obj.y < 0 or obj.y > s_height:
                 self.projectiles.remove(obj)
         
         for obj in self.enemies:
+            shape = obj.shape.copy()
+            for i, point in enumerate(shape):
+                shape[i] = point[0] + obj.x, point[1] + obj.y
+            if self.is_inside_polygon(points = shape, p=(self.player.x, self.player.y)):
+                self.run = False
             obj.update(delta)
                     
         self.time_last_shot += delta
