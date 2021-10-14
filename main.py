@@ -57,7 +57,6 @@ class Asteroids(object):
     def gen_enemy(self):
         x = random.randint(-100, -20) if random.random() < 0.5 else random.randint(s_width + 20, s_width + 100)
         y = random.randint(-100, -20) if random.random() < 0.5 else random.randint(s_height + 20, s_height + 100)
-        self
     
     def frame(self):
         delta = self.clock.get_rawtime() / 1000
