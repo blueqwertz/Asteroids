@@ -1,7 +1,8 @@
 import math
+import random
 
 from render import Renderer
-from player import Player
+from entity import Enemy, Player, Projectile
 
 import pygame
 import os
@@ -38,12 +39,40 @@ class Asteroids(object):
 
         self.player = Player()
         
-        self.keys_pressed = [False, False, False, False]
+        self.keys_pressed = [False, False, False, False, False]
+        
+        
+        self.enemies = []
+        self.projectiles = []
+        self.time_last_shot = 0
         
         self.renderer = Renderer(win, self)
     
+    def render(self):
+        self.win.fill((0, 0, 0))
+        self.renderer.draw_player()
+        self.renderer.draw_projectile(self.projectiles)
+        self.renderer.draw_enemy(self.enemies)
+    
+    def gen_enemy(self):
+        x = random.randint(-100, -20) if random.random() < 0.5 else random.randint(s_width + 20, s_width + 100)
+        y = random.randint(-100, -20) if random.random() < 0.5 else random.randint(s_height + 20, s_height + 100)
+        self
+    
     def frame(self):
         delta = self.clock.get_rawtime() / 1000
+        
+        for obj in self.projectiles:
+            obj.update(delta)
+            if obj.x < 0 or obj.x > s_width or obj.y < 0 or obj.y > s_height:
+                self.projectiles.remove(obj)
+        
+        for obj in self.enemies:
+            obj.update(delta)
+            if obj.x < 0 or obj.x > s_width or obj.y < 0 or obj.y > s_height:
+                self.enemies.remove(obj)
+        
+        self.time_last_shot += delta
         self.clock.tick()
         if self.keys_pressed[0]:
             x = delta * self.speed * math.cos(self.player.angle * math.pi / 180)
@@ -55,7 +84,14 @@ class Asteroids(object):
             y = delta * self.speed * math.sin(self.player.angle * math.pi / 180)
             self.player.x -= x
             self.player.y -= y
-        
+
+        if self.keys_pressed[4]:
+            if self.time_last_shot > 0.3:
+                velX = math.cos(self.player.angle * math.pi / 180)
+                velY = math.sin(self.player.angle * math.pi / 180)
+
+                self.projectiles.append(Projectile(self.player.x, self.player.y, (velX, velY)))
+                self.time_last_shot = 0
         
         if self.player.x < 0:
             self.player.x = s_width
@@ -96,8 +132,15 @@ class Asteroids(object):
                     self.keys_pressed[2] = False
                 if event.key == pygame.K_d:
                     self.keys_pressed[3] = False
+                
+                if event.key == pygame.K_SPACE:
+                    self.keys_pressed[4] = False
             
             if event.type == pygame.KEYDOWN:
+                
+                if event.key == pygame.K_SPACE:
+                    self.keys_pressed[4] = True
+                
                 if event.key == pygame.K_w:
                     self.keys_pressed[0] = True
                 if event.key == pygame.K_s:
@@ -116,7 +159,7 @@ def main(win):
         
         Game.keys()
         Game.frame()
-        Game.renderer.render()
+        Game.render()
         
         pygame.display.flip()
         
