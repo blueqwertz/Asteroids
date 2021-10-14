@@ -4,8 +4,8 @@ from typing import Sized
 
 class Player(object):
     def __init__(self):
-        self.x = 100
-        self.y = 100
+        self.x = 300
+        self.y = 300
         self.angle = 0
         
 
@@ -39,7 +39,6 @@ class Enemy(object):
         max = round(self.size / 5)
         
         for i in range(max + 1):
-            print(i / max)
             x, y = math.cos(i / max * math.pi * 2) * self.size, math.sin(i / max * math.pi * 2) * self.size * random.uniform(0.5, 1)
             points.append([x, y])
         

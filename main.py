@@ -43,6 +43,7 @@ class Asteroids(object):
         
         
         self.enemies = []
+        self.gen_enemy()
         self.projectiles = []
         self.time_last_shot = 0
         
@@ -57,20 +58,26 @@ class Asteroids(object):
     def gen_enemy(self):
         x = random.randint(-100, -20) if random.random() < 0.5 else random.randint(s_width + 20, s_width + 100)
         y = random.randint(-100, -20) if random.random() < 0.5 else random.randint(s_height + 20, s_height + 100)
+        velX = self.player.x - x
+        velY = self.player.y - y
+        dist = math.sqrt((self.player.x - x) ** 2 + (self.player.y - y) ** 2)
+        velX, velY = velX / dist, velY / dist
+        self.enemies.append(Enemy(x, y, (velX, velY)))
+        
     
     def frame(self):
         delta = self.clock.get_rawtime() / 1000
         
         for obj in self.projectiles:
+            for el in self.enemies:
+                pass
             obj.update(delta)
             if obj.x < 0 or obj.x > s_width or obj.y < 0 or obj.y > s_height:
                 self.projectiles.remove(obj)
         
         for obj in self.enemies:
             obj.update(delta)
-            if obj.x < 0 or obj.x > s_width or obj.y < 0 or obj.y > s_height:
-                self.enemies.remove(obj)
-        
+                    
         self.time_last_shot += delta
         self.clock.tick()
         if self.keys_pressed[0]:
