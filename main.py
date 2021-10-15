@@ -4,10 +4,13 @@ import random
 from render import Renderer
 from entity import Enemy, Player, Projectile
 
+from shapely.geometry import Polygon
+
 import pygame
 import os
 
 pygame.init()
+pygame.joystick.init()
 
 s_width = 600
 s_height = 600
@@ -16,11 +19,9 @@ windowX = 1000
 windowY = 200
 os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (windowX,windowY)
 
-pygame.init()
-pygame.joystick.init()
 
 win = pygame.display.set_mode((s_width, s_height))
-pygame.display.set_caption("Tetris")
+pygame.display.set_caption("Asteroids")
 
 
 class Asteroids(object):
@@ -28,7 +29,11 @@ class Asteroids(object):
         self.run = True
         self.win = win
         
-        self.joystickConnected = pygame.joystick.get_count() > 0
+        self.pause = False
+        
+        self.using_joystick = False
+        
+        self.joystick_connected = pygame.joystick.get_count() > 0
         self.joystick = None
         
         self.clock = pygame.time.Clock()
@@ -50,6 +55,10 @@ class Asteroids(object):
         self.time_last_shot = 0
         
         self.renderer = Renderer(win, self)
+    
+    def init_joystick(self):
+        self.joystick = pygame.joystick.Joystick(0)
+        self.joystick.init()
     
     def render(self):
         self.win.fill((0, 0, 0))
@@ -165,6 +174,7 @@ class Asteroids(object):
                 shape = el.shape.copy()
                 for i, point in enumerate(shape):
                     shape[i] = point[0] + el.x, point[1] + el.y
+                
                 if self.is_inside_polygon(points = shape, p = (obj.x, obj.y)):
                     self.enemies.remove(el)
                     if el.size == 40:
@@ -179,11 +189,22 @@ class Asteroids(object):
                 self.projectiles.remove(obj)
         
         for obj in self.enemies:
+            shape = ((-10, 10), (10, 0), (-10, -10), (-5, 0))
+            
+            shape = self.renderer.rotate_shape(shape, self.player.angle)
+            for i, coord in enumerate(shape):
+                shape[i] = coord[0] + self.player.x, coord[1] + self.player.y
+            player = Polygon(shape)
+            
             shape = obj.shape.copy()
-            for i, point in enumerate(shape):
-                shape[i] = point[0] + obj.x, point[1] + obj.y
-            if self.is_inside_polygon(points = shape, p=(self.player.x, self.player.y)):
-                self.run = False
+            for i, coord in enumerate(shape):
+                shape[i] = coord[0] + obj.x, coord[1] + obj.y
+            
+            enemy = Polygon(shape)
+            
+            if enemy.intersects(player):
+                self.pause = True
+            
             obj.update(delta)
                     
         self.time_last_shot += delta
@@ -226,16 +247,54 @@ class Asteroids(object):
         for event in pygame.event.get():
             if event.type == pygame.JOYDEVICEADDED:
                 self.joystick_connected = True
+                self.using_joystick = True
                 self.init_joystick()
             
             if event.type == pygame.JOYDEVICEREMOVED:
                 self.joystick = None
                 self.joystick_connected = False
+                self.using_joystick = False
             
             if event.type == pygame.QUIT:
                 self.run = False
                 pygame.quit()
+            
+            if self.joystick_connected:
                 
+                joy_activation = 0.7
+                up_down = self.joystick.get_axis(1)
+                
+                if abs(up_down) > joy_activation:
+                    self.using_joystick = True
+                
+                if self.using_joystick:
+                    if up_down < -joy_activation:
+                        self.keys_pressed[0] = True
+                    else:
+                        self.keys_pressed[0] = False
+                    
+                    if up_down > joy_activation:
+                        self.keys_pressed[1] = True
+                    else:
+                        self.keys_pressed[1] = False
+                
+                rigth_left = self.joystick.get_axis(2)
+                
+                if abs(rigth_left) > joy_activation:
+                    self.using_joystick = True
+                        
+                if self.using_joystick:
+                    
+                    if rigth_left < -joy_activation:
+                        self.keys_pressed[2] = True
+                    else:
+                        self.keys_pressed[2] = False
+                    
+                    if rigth_left > joy_activation:
+                        self.keys_pressed[3] = True
+                    else:
+                        self.keys_pressed[3] = False
+            
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_w:
                     self.keys_pressed[0] = False
@@ -251,7 +310,7 @@ class Asteroids(object):
                     self.keys_pressed[4] = False
             
             if event.type == pygame.KEYDOWN:
-                
+                self.using_joystick = False
                 if event.key == pygame.K_SPACE:
                     self.keys_pressed[4] = True
                 
@@ -272,7 +331,8 @@ def main(win):
     while Game.run:
         
         Game.keys()
-        Game.frame()
+        if not Game.pause:
+            Game.frame()   
         Game.render()
         
         pygame.display.flip()
