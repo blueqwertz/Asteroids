@@ -36,7 +36,7 @@ class Enemy(object):
         
     def gen_shape(self):
         points = []
-        max = round(self.size / 5)
+        max = 10
         
         for i in range(max + 1):
             x, y = math.cos(i / max * math.pi * 2) * self.size, math.sin(i / max * math.pi * 2) * self.size * random.uniform(0.5, 1)
