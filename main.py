@@ -202,6 +202,27 @@ class Asteroids(object):
             
             enemy = Polygon(shape)
             
+            
+            for i, other in enumerate(self.enemies):
+                if not i < len(self.enemies):
+                    break
+                if other == obj:
+                    continue
+                shape = other.shape.copy()
+                for ind, coord in enumerate(shape):
+                    shape[ind] = coord[0] + other.x, coord[1] + other.y
+                other = Polygon(shape)
+                
+                if enemy.intersects(other):
+                    try:
+                        self.enemies.remove(obj)
+                        self.enemies.remove(other)
+                        # if obj.size == 40:
+                        #     self.gen_enemy(obj.x - 20, obj.y - 20, 20)
+                        #     self.gen_enemy(obj.x + 20, obj.y + 20, 20)
+                    except:
+                        print(i, len(self.enemies))
+            
             if enemy.intersects(player):
                 self.pause = True
             
