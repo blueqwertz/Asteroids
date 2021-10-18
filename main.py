@@ -79,7 +79,7 @@ class Asteroids(object):
         velX, velY = velX / dist, velY / dist
         self.enemies.append(Enemy(x, y, (velX, velY), size))    
     
-    def is_inside_polygon(self, points, p) -> bool:
+    def is_inside_polygon(self, points, p):
         
         INT_MAX = 10000
  
